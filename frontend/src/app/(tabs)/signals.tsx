@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { signals as signalsApi } from '../../services/api';
+import { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { colors } from '../../theme/colors';
 
 interface Signal {
@@ -9,30 +9,17 @@ interface Signal {
   content: string;
   signal_type: string;
   impact: string;
-  created_at: string;
 }
 
+const MOCK_SIGNALS: Signal[] = [
+  { id: 1, title: 'Fed Rate Decision', content: 'Federal Reserve maintains rates at 5.25%. Markets respond positively.', signal_type: 'monetary', impact: 'high' },
+  { id: 2, title: 'CPI Data Release', content: 'Inflation at 3.2% YoY, slightly below expectations.', signal_type: 'inflation', impact: 'medium' },
+  { id: 3, title: 'Jobs Report', content: 'Non-farm payrolls: +180K. Unemployment steady at 3.9%.', signal_type: 'employment', impact: 'medium' },
+];
+
 export default function SignalsScreen() {
-  const [signals, setSignals] = useState<Signal[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const loadSignals = async () => {
-    try {
-      const data = await signalsApi.getAll();
-      setSignals(data);
-    } catch (error) {
-      console.log('Using mock data');
-      setSignals([
-        { id: 1, title: 'Fed Rate Decision', content: 'Federal Reserve maintains rates at 5.25%. Markets respond positively.', signal_type: 'monetary', impact: 'high', created_at: new Date().toISOString() },
-        { id: 2, title: 'CPI Data Release', content: 'Inflation at 3.2% YoY, slightly below expectations.', signal_type: 'inflation', impact: 'medium', created_at: new Date().toISOString() },
-        { id: 3, title: 'Jobs Report', content: 'Non-farm payrolls: +180K. Unemployment steady at 3.9%.', signal_type: 'employment', impact: 'medium', created_at: new Date().toISOString() },
-      ]);
-    }
-  };
-
-  useEffect(() => {
-    loadSignals();
-  }, []);
+  const [signals] = useState<Signal[]>(MOCK_SIGNALS);
+  const router = useRouter();
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
@@ -52,6 +39,12 @@ export default function SignalsScreen() {
       </View>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.content}>{item.content}</Text>
+      <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => router.push(`/signal/${item.id}`)}
+      >
+        <Text style={styles.actionButtonText}>What should I do?</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -66,7 +59,6 @@ export default function SignalsScreen() {
         renderItem={renderSignal}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={loadSignals} tintColor={colors.primary} />}
       />
     </View>
   );
@@ -85,4 +77,12 @@ const styles = StyleSheet.create({
   type: { color: colors.textSecondary, fontSize: 13, textTransform: 'capitalize' },
   title: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 8 },
   content: { fontSize: 15, color: colors.textSecondary, lineHeight: 22 },
+  actionButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  actionButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
 });

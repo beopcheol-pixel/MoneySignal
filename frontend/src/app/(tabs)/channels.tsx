@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { channels as channelsApi } from '../../services/api';
 import { colors } from '../../theme/colors';
 
 interface Channel {
@@ -9,37 +8,38 @@ interface Channel {
   name: string;
   description: string;
   icon: string;
+  subscribers: string;
+  postsToday: number;
 }
 
-export default function ChannelsScreen() {
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const router = useRouter();
+const MOCK_CHANNELS: Channel[] = [
+  { id: 1, name: 'Market Insights', description: 'Daily market analysis and trends', icon: '📊', subscribers: '12.5K', postsToday: 3 },
+  { id: 2, name: 'Crypto Watch', description: 'Cryptocurrency news and signals', icon: '₿', subscribers: '8.2K', postsToday: 5 },
+  { id: 3, name: 'Global Macro', description: 'Macroeconomic events worldwide', icon: '🌍', subscribers: '6.8K', postsToday: 2 },
+  { id: 4, name: 'Tech Stocks', description: 'Technology sector updates', icon: '💻', subscribers: '9.1K', postsToday: 4 },
+  { id: 5, name: 'Dividend Income', description: 'Dividend investing strategies', icon: '💰', subscribers: '5.4K', postsToday: 1 },
+];
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await channelsApi.getAll();
-        setChannels(data);
-      } catch {
-        setChannels([
-          { id: 1, name: 'Market Insights', description: 'Daily market analysis and trends', icon: '📊' },
-          { id: 2, name: 'Crypto Watch', description: 'Cryptocurrency news and signals', icon: '₿' },
-          { id: 3, name: 'Global Macro', description: 'Macroeconomic events worldwide', icon: '🌍' },
-        ]);
-      }
-    };
-    load();
-  }, []);
+export default function ChannelsScreen() {
+  const [channels] = useState<Channel[]>(MOCK_CHANNELS);
+  const router = useRouter();
 
   const renderChannel = ({ item }: { item: Channel }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => router.push(`/channel/${item.id}`)}
     >
-      <Text style={styles.icon}>{item.icon}</Text>
+      <View style={styles.iconContainer}>
+        <Text style={styles.icon}>{item.icon}</Text>
+      </View>
       <View style={styles.cardContent}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.description}>{item.description}</Text>
+        <View style={styles.stats}>
+          <Text style={styles.subscribers}>{item.subscribers} subscribers</Text>
+          <View style={styles.dot} />
+          <Text style={styles.posts}>{item.postsToday} posts today</Text>
+        </View>
       </View>
       <Text style={styles.arrow}>›</Text>
     </TouchableOpacity>
@@ -49,7 +49,7 @@ export default function ChannelsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Channels</Text>
-        <Text style={styles.headerSubtitle}>Read-only expert insights</Text>
+        <Text style={styles.headerSubtitle}>Expert insights, read-only</Text>
       </View>
       <FlatList
         data={channels}
@@ -74,9 +74,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  icon: { fontSize: 32, marginRight: 16 },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: colors.cardLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  icon: { fontSize: 26 },
   cardContent: { flex: 1 },
   name: { fontSize: 17, fontWeight: '600', color: colors.text },
   description: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
+  stats: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  subscribers: { fontSize: 12, color: colors.primary },
+  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.textMuted, marginHorizontal: 8 },
+  posts: { fontSize: 12, color: colors.textMuted },
   arrow: { fontSize: 24, color: colors.textMuted },
 });
